@@ -2,139 +2,139 @@
 #include "motors.h"
 #include "timer.h"
 
-int tempo, marcaesquerda, marcadireita, sensor_0, sensor_1, sensor_2, sensor_3, sensor_4, sensor_5, sensor_6, encoder1, encoder2;
+int tempo, curva, inicio, sensores[7], encoder_l, encoder_r, j, tempo2, sens[7], s[7], media;
 
-marcadireita = 0;
+inicio=0;
+curva=0;
 
-int main() {
-	for (;;) {
-
-        tempo = get_tick();
-        if (tempo >= 1000)
+int main()
+{
+    while(tempo<1000){tempo = get_tick()}
+    for (;;) {
+        for (j = 0; i<7; i++)
         {
-            sensor_6 = getLineSensor(6);
-            sensor_0 = getLineSensor(0);
+            sensores[j] = getLineSensor(j);
+            if (sensores[j] > 800)
+            {
+                sens[j] = 1;
+            }
+            else
+            {
+                sens[j] = 0;
+            }
+        }
+        encoder_l = getEncoder(ENCODER_L);
+        encoder_r = getEncoder(ENCODER_R);
+        if (sensores[6]>800)
+        {
+            if (inicio == 0)
+            {
+                tempo2 = get_tick();
+                motors(255,255);
+                while(tempo2<tempo+500){tempo2 = get_tick()}
 
-            \* Comando para ultrapassar a primeira linha branca do lado direito
-                Consideramos que o sensor 6 lê apenas a marca do lado direito *\
-            while ( sensor_6 > 500 && sensor_0 < 500 && marcadireita == 0)
-            {
-                motors (255,255);
-                sensor_6 = getLineSensor(6);
-                sensor_0 = getLineSensor(0);
-            }
-            \* Consideramos que a distância entre o sensor 2 e o sensor 4 é maior do que a linha *\
-            sensor_2 = getLineSensor(2);
-            sensor_3 = getLineSensor(3);
-            sensor_4 = getLineSensor(4);
-            marcadireita = 1;
-            
-            \* Comando para andar em linha reta *\
-            while ( sensor_2 < 500 && sensor_3 > 500 && sensor_4 < 500 && sensor_0 < 500 && sensor_6 < 500) 
-            {
-                motors (255,255);
-                sensor_2 = getLineSensor(2);
-                sensor_3 = getLineSensor(3);
-                sensor_4 = getLineSensor(4);
-                sensor_0 = getLineSensor(0);
-                sensor_6 = getLineSensor(6);
-            }
-            \* Comando para correção caso saia fora da curva *\
-            while (sensor_2 > 500) 
-            {
-                motors (240,255);
-                sensor_2 = getLineSensor(2);
-                sensor_3 = getLineSensor(3);
-                sensor_4 = getLineSensor(4);
-                sensor_0 = getLineSensor(0);
-                sensor_6 = getLineSensor(6);
-                while (sensor_3 < 500)
-                {
-                    motors (200, 255);
-                    sensor_2 = getLineSensor(2);
-                    sensor_3 = getLineSensor(3);
-                    sensor_4 = getLineSensor(4);
-                    sensor_0 = getLineSensor(0);
-                    sensor_6 = getLineSensor(6);
-                }
+/*meio segundo é o tempo para o robo passar a espessura da linha no inicio*/
+
+                inicio +=1;
             }
 
-            while (sensor_4 > 500) 
+            else
             {
-                motors (255,240);
-                sensor_2 = getLineSensor(2);
-                sensor_3 = getLineSensor(3);
-                sensor_4 = getLineSensor(4);
-                sensor_0 = getLineSensor(0);
-                sensor_6 = getLineSensor(6);
-                while (sensor_3 < 500)
-                {
-                    motors (255, 200);
-                    sensor_2 = getLineSensor(2);
-                    sensor_3 = getLineSensor(3);
-                    sensor_4 = getLineSensor(4);
-                    sensor_0 = getLineSensor(0);
-                    sensor_6 = getLineSensor(6);
-                }
+                encoder1=encoder_l;
+                while (encoder_l < encoder1 + 350){encoder_l = getEncoder(ENCODER_L)}
+                motors(255,255);
+
+/*350 seria a distancia teorica para o robo estar totalmente entre as 2 linhas direitas no fim*/
+
+                for(;;)
             }
-
-
-            \* Consideramos que o sensor 0 lerá apenas a marca da esquerda
-                O robô entrará em um modo de curva com velocidade reduzida*\
-            if ( sensor_0 > 500 && sensor_6 < 500)
-                marcaesquerda = 1;
-
-            while (marcaesquerda == 1)
+        }
+        if (sensores[0]>800)
+        {
+            while(tempo2<tempo+500){tempo2 = get_tick()}
+            motors(255,255);
+            if (curva==0)
             {
-                \*redução de velocidade na zona de curvas*\
-                while (sensor_2 < 500 && sensor_3 > 500 && sensor_4 < 500 && marcaesquerda == 1)
-                {
-                    motors (175, 175)
-                    sensor_2 = getLineSensor(2);
-                    sensor_3 = getLineSensor(3);
-                    sensor_4 = getLineSensor(4);
-                    sensor_0 = getLineSensor(0);
-                    if (sensor_0 > 500)
-                        marcaesquerda = 0
-                }
-                while(sensor_2 > 500 && marcaesquerda == 1)
-                {
-                    motors(100,200);
-                    sensor_2 = getLineSensor(2);
-                    sensor_0 = getLineSensor(0);
-                    if (sensor_0 > 500)
-                        marcaesquerda = 0;
-                }
-                while(sensor_4 > 500 && marcaesquerda == 1)
-                {
-                    motors(200,100);
-                    sensor_4 = getLineSensor(4);
-                    sensor_0 = getLineSensor(0);
-                    if (sensor_0 > 500)
-                        marcaesquerda = 0
-                }
+                curva+=1;
+                motors(200,200);
             }
+        else
+        {
+            curva=0;
+        }
 
-            \* Comando de parada *\
-            sensor_6 = getLineSensor(6);
-            if (sensor_6 > 500 && sensor_0 < 500)
+/*meio segundo seria o tempo de passar a linha. tal if seria como um meio de ver se o robo esta em curva ou não, o que implica na sua reduçâo de velocidade.*/
+/* 0 = nao esta em curva, 1= esta em curva*/ 
+
+        }
+
+/* calculo da media ponderada para usar o "método da proporcional" para fazer a curva e ajustar caso esteja fora do percurso*/
+
+        media = 0;
+        s[0] = sens[0]*0;
+        s[1] = sens[1]*-2;
+        s[2] = sens[2]*-1;
+        s[3] = sens[3]*0;
+        s[4] = sens[4]*1;
+        s[5] = sens[5]*2;
+        s[6] = sens[6]*0;
+
+        for (j=0; i<7; i++)
+        {
+
+            media = media + s[j];
+        }
+        
+        if (media == -1) {motors(210,255);}
+        if (media == 1) {motors(255,210);}
+        else {motors(255,255);}
+        
+        if (media < 0)
+        {
+            if (curva == 1)
             {
-                encoder1 = getEncoder (ENCODER_L);
-                encoder2 = 0;
-                while
-                {
-                    if (encoder2 < encoder1 + 350)
-                {
-                    encoder2 = getEncoder(ENCODER_L);
-                    motors(255,255);
-                }
-                    else
-                    {
-                        motors (0,0);
-                        for (;;) {}
-                    }
+                motors(170,220);
             }
-	}
+            else
+            {
+                motors(190,255);                
+            }
+        }
+
+        if (media > 0)
+        {
+            if (curva == 1)
+            {
+                motors(220,170);
+            }
+            else
+            {
+                motors(255,190);
+            }
+        }
+
+        if (media < -1)
+        {
+            if (curva==1)
+            {
+                motors(150,210);
+            }
+            else
+            {
+                motors(150,255);
+            }
+        } 
+
+        if (media > 1)
+        {
+            if (curva==1)
+            {
+                motors(210,150);
+            }
+            else
+            {
+                motors(255,150);
+            }
+        }
     }
-}
 }
